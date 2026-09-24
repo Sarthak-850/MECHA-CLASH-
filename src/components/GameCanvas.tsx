@@ -8,8 +8,9 @@ import { RoundEndOverlay } from './RoundEndOverlay';
 import { PauseModal } from './PauseModal';
 import { VictoryModal } from './VictoryModal';
 import { DefeatModal } from './DefeatModal';
+import { VirtualControls } from './VirtualControls';
 import { soundManager } from '../audio/soundManager';
-import { Keyboard } from 'lucide-react';
+import { RotateCw, X } from 'lucide-react';
 
 interface GameCanvasProps {
   engine: GameEngine;
@@ -28,15 +29,49 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onMainMenu }) =>
   const [countdownStep, setCountdownStep] = useState(engine.countdownStep);
   const [roundWinner, setRoundWinner] = useState(engine.roundWinner);
   const [isMuted, setIsMuted] = useState(soundManager.getMuted());
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
-  // Detect touch/mobile
+  // Touch and orientation detection
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [showTouchControls, setShowTouchControls] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
+  const [dismissPortraitNotice, setDismissPortraitNotice] = useState(false);
+
+  // Initialize and track touch detection + orientation
   useEffect(() => {
-    const isTouch =
-      'ontouchstart' in window ||
-      navigator.maxTouchPoints > 0 ||
-      window.innerWidth < 640;
-    setIsTouchDevice(isTouch);
+    const checkTouchAndOrientation = () => {
+      const hasTouch =
+        'ontouchstart' in window ||
+        navigator.maxTouchPoints > 0 ||
+        window.matchMedia('(pointer: coarse)').matches;
+
+      setIsTouchDevice(hasTouch);
+      if (hasTouch) {
+        setShowTouchControls(true);
+      }
+
+      const portrait = window.innerHeight > window.innerWidth && window.innerWidth < 800;
+      setIsPortrait(portrait);
+    };
+
+    checkTouchAndOrientation();
+
+    // Any touch pointer anywhere turns on touch controls automatically
+    const handleGlobalPointerDown = (e: PointerEvent) => {
+      if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+        setIsTouchDevice(true);
+        setShowTouchControls(true);
+      }
+    };
+
+    window.addEventListener('resize', checkTouchAndOrientation);
+    window.addEventListener('orientationchange', checkTouchAndOrientation);
+    window.addEventListener('pointerdown', handleGlobalPointerDown);
+
+    return () => {
+      window.removeEventListener('resize', checkTouchAndOrientation);
+      window.removeEventListener('orientationchange', checkTouchAndOrientation);
+      window.removeEventListener('pointerdown', handleGlobalPointerDown);
+    };
   }, []);
 
   // Hook engine callbacks
@@ -52,14 +87,25 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onMainMenu }) =>
     };
   }, [engine]);
 
-  // Keyboard Event Handlers
+  // Keyboard Event Handlers (Preserved 100% for desktop)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Prevent default page scroll for game keys
       if (
-        ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyP', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(
-          e.code
-        )
+        [
+          'KeyW',
+          'KeyA',
+          'KeyS',
+          'KeyD',
+          'KeyF',
+          'KeyG',
+          'KeyP',
+          'ArrowUp',
+          'ArrowDown',
+          'ArrowLeft',
+          'ArrowRight',
+          'Space',
+        ].includes(e.code)
       ) {
         e.preventDefault();
       }
@@ -81,8 +127,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onMainMenu }) =>
     };
 
     const handleBlur = () => {
-      // Clear stuck keys if user tabs out
+      // Clear stuck keys if user tabs out or switches apps
       engine.keys = {};
+      engine.setJoystickVector(0, 0);
       if (engine.gameState === 'BATTLE') {
         engine.pause();
       }
@@ -193,70 +240,85 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ engine, onMainMenu }) =>
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full flex items-center justify-center bg-slate-950 overflow-hidden select-none"
+      className="relative w-full h-full flex flex-col items-center justify-center bg-slate-950 overflow-hidden select-none touch-none"
+      style={{ touchAction: 'none' }}
     >
-      {/* Aspect Ratio Box to keep 960x600 arena proportion */}
-      <div className="relative w-full max-w-[1200px] aspect-[960/600] flex items-center justify-center shadow-2xl">
-        <canvas
-          ref={canvasRef}
-          width={ARENA_WIDTH}
-          height={ARENA_HEIGHT}
-          className="w-full h-full block bg-slate-950 rounded-xl border border-slate-800 shadow-2xl object-contain"
-        />
+      {/* Portrait Suggestion Notice (Non-blocking, dismissible) */}
+      {isPortrait && isTouchDevice && !dismissPortraitNotice && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 border border-cyan-500/40 text-cyan-300 text-[11px] sm:text-xs font-mono-data py-1.5 px-3 rounded-full shadow-lg flex items-center gap-2 backdrop-blur-md animate-pulse">
+          <RotateCw className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+          <span>Rotate your phone for the best experience.</span>
+          <button
+            onClick={() => setDismissPortraitNotice(true)}
+            className="p-0.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white cursor-pointer ml-1"
+            aria-label="Dismiss notice"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
 
-        {/* HUD Overlay */}
-        <HUD
-          engine={engine}
-          onPause={handlePause}
-          onToggleMute={handleToggleMute}
-          isMuted={isMuted}
-        />
-
-        {/* Countdown Overlay */}
-        {gameState === 'COUNTDOWN' && (
-          <CountdownOverlay round={engine.currentRound} count={countdownStep} />
-        )}
-
-        {/* Round End Overlay */}
-        {gameState === 'ROUND_END' && (
-          <RoundEndOverlay winner={roundWinner} round={engine.currentRound} />
-        )}
-
-        {/* Pause Modal */}
-        {gameState === 'PAUSED' && (
-          <PauseModal
-            onResume={handleResume}
-            onRestart={handleRestart}
-            onMainMenu={onMainMenu}
+      {/* Responsive Aspect-Ratio Preserving Game Arena */}
+      <div className="relative w-full h-full flex items-center justify-center p-0.5 sm:p-2">
+        <div className="relative w-full h-full max-w-[1280px] max-h-[100vh] aspect-[960/600] flex items-center justify-center shadow-2xl">
+          <canvas
+            ref={canvasRef}
+            width={ARENA_WIDTH}
+            height={ARENA_HEIGHT}
+            className="w-full h-full block bg-slate-950 rounded-xl border border-slate-800/80 shadow-2xl object-contain"
           />
-        )}
 
-        {/* Victory Modal */}
-        {gameState === 'VICTORY' && (
-          <VictoryModal
+          {/* HUD Overlay */}
+          <HUD
             engine={engine}
-            onNextLevel={handleNextLevel}
-            onPlayAgain={handleRestart}
-            onMainMenu={onMainMenu}
+            onPause={handlePause}
+            onToggleMute={handleToggleMute}
+            isMuted={isMuted}
           />
-        )}
 
-        {/* Defeat Modal */}
-        {gameState === 'DEFEAT' && (
-          <DefeatModal
-            engine={engine}
-            onRetry={handleRestart}
-            onMainMenu={onMainMenu}
-          />
-        )}
+          {/* Countdown Overlay */}
+          {gameState === 'COUNTDOWN' && (
+            <CountdownOverlay round={engine.currentRound} count={countdownStep} />
+          )}
 
-        {/* Mobile keyboard notification banner */}
-        {isTouchDevice && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg bg-amber-950/90 border border-amber-500/40 text-amber-300 text-[11px] font-mono-data flex items-center gap-2 pointer-events-auto z-20">
-            <Keyboard className="w-3.5 h-3.5 shrink-0" />
-            <span>MECHA CLASH is designed for keyboard gameplay (WASD + F + G).</span>
-          </div>
-        )}
+          {/* Round End Overlay */}
+          {gameState === 'ROUND_END' && (
+            <RoundEndOverlay winner={roundWinner} round={engine.currentRound} />
+          )}
+
+          {/* Pause Modal */}
+          {gameState === 'PAUSED' && (
+            <PauseModal
+              onResume={handleResume}
+              onRestart={handleRestart}
+              onMainMenu={onMainMenu}
+            />
+          )}
+
+          {/* Victory Modal */}
+          {gameState === 'VICTORY' && (
+            <VictoryModal
+              engine={engine}
+              onNextLevel={handleNextLevel}
+              onPlayAgain={handleRestart}
+              onMainMenu={onMainMenu}
+            />
+          )}
+
+          {/* Defeat Modal */}
+          {gameState === 'DEFEAT' && (
+            <DefeatModal
+              engine={engine}
+              onRetry={handleRestart}
+              onMainMenu={onMainMenu}
+            />
+          )}
+
+          {/* Mobile Virtual Controls (Joystick & Action Buttons) */}
+          {showTouchControls && (gameState === 'BATTLE' || gameState === 'COUNTDOWN') && (
+            <VirtualControls engine={engine} />
+          )}
+        </div>
       </div>
     </div>
   );

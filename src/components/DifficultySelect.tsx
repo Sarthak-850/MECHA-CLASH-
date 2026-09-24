@@ -63,14 +63,22 @@ export const DifficultySelect: React.FC<DifficultySelectProps> = ({
   onBack,
 }) => {
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-between p-6 sm:p-8 bg-slate-950 overflow-hidden select-none">
+    <div
+      className="relative w-full h-full flex flex-col items-center justify-between p-4 sm:p-8 bg-slate-950 overflow-y-auto select-none"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top, 0px), 16px)',
+        paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)',
+        paddingLeft: 'max(env(safe-area-inset-left, 0px), 16px)',
+        paddingRight: 'max(env(safe-area-inset-right, 0px), 16px)',
+      }}
+    >
       <div className="absolute inset-0 scanlines opacity-40 pointer-events-none" />
 
       {/* Header */}
-      <div className="w-full max-w-3xl flex items-center justify-between z-10">
+      <div className="w-full max-w-3xl flex items-center justify-between z-10 mb-2 sm:mb-4">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-600 text-xs font-mono-data text-slate-300 hover:text-white transition-colors cursor-pointer"
+          className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-600 text-xs font-mono-data text-slate-300 hover:text-white transition-colors cursor-pointer active:scale-95"
         >
           <ArrowLeft className="w-4 h-4" /> BACK
         </button>
@@ -80,40 +88,40 @@ export const DifficultySelect: React.FC<DifficultySelectProps> = ({
       </div>
 
       {/* Main Container */}
-      <div className="w-full max-w-2xl flex flex-col items-center my-auto z-10">
-        <h2 className="font-display font-black text-3xl sm:text-4xl text-white tracking-wider uppercase mb-1">
+      <div className="w-full max-w-2xl flex flex-col items-center my-auto z-10 py-2">
+        <h2 className="font-display font-black text-2xl sm:text-4xl text-white tracking-wider uppercase mb-1 text-center">
           SELECT AI DIFFICULTY
         </h2>
-        <p className="text-xs text-slate-400 font-mono-data mb-6 text-center">
+        <p className="text-xs text-slate-400 font-mono-data mb-4 sm:mb-6 text-center">
           Choose NOVA AI neural combat tier. Higher tiers feature predictive interception and rapid dodges.
         </p>
 
         {/* 5 Difficulty Cards */}
-        <div className="w-full flex flex-col gap-3">
+        <div className="w-full flex flex-col gap-2.5 sm:gap-3">
           {DIFFICULTY_ITEMS.map((item) => {
             const config = AI_DIFFICULTIES[item.level];
             return (
               <button
                 key={item.level}
                 onClick={() => onSelect(item.level)}
-                className={`w-full group flex items-center justify-between p-3.5 sm:p-4 rounded-xl bg-slate-900/90 border ${item.borderClass} transition-all hover:-translate-y-0.5 hover:shadow-lg cursor-pointer text-left`}
+                className={`w-full group flex items-center justify-between p-3 sm:p-4 rounded-xl bg-slate-900/90 border ${item.borderClass} transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-98 cursor-pointer text-left`}
               >
-                <div className="flex items-center gap-3.5">
-                  <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 sm:p-2.5 rounded-lg bg-slate-950 border border-slate-800 shrink-0">
                     {item.icon}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-display font-bold text-sm sm:text-base text-white tracking-wide">
+                      <span className="font-display font-bold text-xs sm:text-base text-white tracking-wide">
                         {item.name}
                       </span>
                       <span
-                        className={`text-[10px] font-mono-data font-semibold px-1.5 py-0.5 rounded border border-current ${item.colorClass}`}
+                        className={`text-[9px] sm:text-[10px] font-mono-data font-semibold px-1.5 py-0.5 rounded border border-current ${item.colorClass}`}
                       >
                         {item.tag}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-400 font-mono-data mt-0.5">
+                    <div className="text-[11px] sm:text-xs text-slate-400 font-mono-data mt-0.5">
                       “{config.description}”
                     </div>
                   </div>
@@ -130,7 +138,7 @@ export const DifficultySelect: React.FC<DifficultySelectProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="w-full max-w-3xl text-center text-[11px] font-mono-data text-slate-400 z-10">
+      <div className="w-full max-w-3xl text-center text-[10px] sm:text-[11px] font-mono-data text-slate-400 z-10 mt-2">
         AI BEHAVIOR IS PURE REAL-TIME DECISION MAKING · NO RIGGED DAMAGE OR HEALTH ADVANTAGES
       </div>
     </div>

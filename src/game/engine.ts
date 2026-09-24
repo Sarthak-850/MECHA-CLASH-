@@ -90,8 +90,26 @@ export class GameEngine {
   // Keyboard input states
   public keys: Record<string, boolean> = {};
 
+  // Virtual joystick vector (-1 to 1) from touch controls
+  public joystickVector: { x: number; y: number } = { x: 0, y: 0 };
+  public touchAttackRequested: boolean = false;
+  public touchDashRequested: boolean = false;
+
   // Callback to inform React UI of state changes
   public onStateChange?: (state: GameState) => void;
+
+  public setJoystickVector(x: number, y: number) {
+    this.joystickVector.x = x;
+    this.joystickVector.y = y;
+  }
+
+  public triggerPlayerAttack() {
+    this.touchAttackRequested = true;
+  }
+
+  public triggerPlayerDash() {
+    this.touchDashRequested = true;
+  }
 
   constructor() {
     this.initEntities();
@@ -506,7 +524,7 @@ export class GameEngine {
   private processPlayerInput(dt: number) {
     if (this.vex.hitStunTimer > 0 || this.vex.isDefeated) return;
 
-    // Movement axes
+    // Movement axes (Keyboard WASD/Arrows)
     let dx = 0;
     let dy = 0;
     if (this.keys['KeyW'] || this.keys['ArrowUp']) dy -= 1;
@@ -514,10 +532,20 @@ export class GameEngine {
     if (this.keys['KeyA'] || this.keys['ArrowLeft']) dx -= 1;
     if (this.keys['KeyD'] || this.keys['ArrowRight']) dx += 1;
 
+    // Merge Virtual Joystick input if active
+    const joyMag = Math.hypot(this.joystickVector.x, this.joystickVector.y);
+    if (joyMag > 0.05) {
+      dx += this.joystickVector.x;
+      dy += this.joystickVector.y;
+    }
+
     const mag = Math.hypot(dx, dy);
     if (mag > 0) {
-      dx /= mag;
-      dy /= mag;
+      // Normalize if beyond 1 (handles simultaneous keys or strong joystick drag)
+      const scale = mag > 1 ? 1 / mag : 1;
+      dx *= scale;
+      dy *= scale;
+
       // Facing angle follows movement direction
       this.vex.angle = Math.atan2(dy, dx);
       this.vex.walkCycle += dt * 14;
@@ -531,14 +559,16 @@ export class GameEngine {
       this.vex.vy = 0;
     }
 
-    // Attack Action (F)
-    if (this.keys['KeyF']) {
+    // Attack Action (F or Touch Attack)
+    if (this.keys['KeyF'] || this.touchAttackRequested) {
       this.triggerAttack(this.vex);
+      this.touchAttackRequested = false;
     }
 
-    // Dash Action (G)
-    if (this.keys['KeyG']) {
+    // Dash Action (G or Touch Dash)
+    if (this.keys['KeyG'] || this.touchDashRequested) {
       this.triggerDash(this.vex, dx, dy);
+      this.touchDashRequested = false;
     }
   }
 
@@ -584,7 +614,7 @@ export class GameEngine {
     }
   }
 
-  private triggerAttack(mech: MechState) {
+  public triggerAttack(mech: MechState) {
     if (mech.attackCooldown > 0 || mech.isAttacking || mech.isDashing) return;
 
     mech.isAttacking = true;
@@ -594,7 +624,7 @@ export class GameEngine {
     soundManager.playAttack(mech.hasPowerAttack);
   }
 
-  private triggerDash(mech: MechState, inputDx: number, inputDy: number) {
+  public triggerDash(mech: MechState, inputDx: number, inputDy: number) {
     if (mech.dashCooldown > 0 || mech.isDashing) return;
 
     mech.isDashing = true;

@@ -14,14 +14,22 @@ export const CampaignSelect: React.FC<CampaignSelectProps> = ({
   onBack,
 }) => {
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-between p-6 sm:p-8 bg-slate-950 overflow-y-auto select-none">
+    <div
+      className="relative w-full h-full flex flex-col items-center justify-between p-4 sm:p-8 bg-slate-950 overflow-y-auto select-none"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top, 0px), 16px)',
+        paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)',
+        paddingLeft: 'max(env(safe-area-inset-left, 0px), 16px)',
+        paddingRight: 'max(env(safe-area-inset-right, 0px), 16px)',
+      }}
+    >
       <div className="absolute inset-0 scanlines opacity-40 pointer-events-none" />
 
       {/* Top Header */}
-      <div className="w-full max-w-4xl flex items-center justify-between z-10 mb-4">
+      <div className="w-full max-w-4xl flex items-center justify-between z-10 mb-3 sm:mb-4">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-600 text-xs font-mono-data text-slate-300 hover:text-white transition-colors cursor-pointer"
+          className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-600 text-xs font-mono-data text-slate-300 hover:text-white transition-colors cursor-pointer active:scale-95"
         >
           <ArrowLeft className="w-4 h-4" /> BACK
         </button>
@@ -31,8 +39,8 @@ export const CampaignSelect: React.FC<CampaignSelectProps> = ({
       </div>
 
       {/* Title */}
-      <div className="text-center z-10 mb-6">
-        <h2 className="font-display font-black text-3xl sm:text-4xl text-white tracking-wider uppercase mb-1">
+      <div className="text-center z-10 mb-4 sm:mb-6">
+        <h2 className="font-display font-black text-2xl sm:text-4xl text-white tracking-wider uppercase mb-1">
           CAMPAIGN PROGRESSION
         </h2>
         <p className="text-xs text-slate-400 font-mono-data">
@@ -41,7 +49,7 @@ export const CampaignSelect: React.FC<CampaignSelectProps> = ({
       </div>
 
       {/* 8 Campaign Levels Grid */}
-      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-3.5 z-10 my-auto">
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5 z-10 my-auto">
         {CAMPAIGN_LEVELS.map((stage) => {
           const isUnlocked = stage.level <= unlockedLevel;
           const isCompleted = stage.level < unlockedLevel;
@@ -49,39 +57,39 @@ export const CampaignSelect: React.FC<CampaignSelectProps> = ({
           return (
             <div
               key={stage.level}
-              className={`p-4 rounded-xl border transition-all ${
+              className={`p-3.5 sm:p-4 rounded-xl border transition-all ${
                 isUnlocked
                   ? 'bg-slate-900/90 border-slate-700/80 hover:border-cyan-500/60 shadow-lg'
                   : 'bg-slate-950/60 border-slate-900 opacity-60'
               } flex flex-col justify-between`}
             >
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-display font-bold text-sm sm:text-base text-white">
                       {stage.title}
                     </span>
                     {isCompleted && (
-                      <span className="flex items-center gap-1 text-[10px] font-mono-data text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                      <span className="flex items-center gap-1 text-[9px] sm:text-[10px] font-mono-data text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-500/30">
                         <ShieldCheck className="w-3 h-3" /> CLEARED
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] font-mono-data uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                  <span className="text-[9px] sm:text-[10px] font-mono-data uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
                     {stage.difficulty}
                   </span>
                 </div>
 
-                <div className="text-xs text-cyan-400 font-display mb-1.5">
+                <div className="text-xs text-cyan-400 font-display mb-1">
                   {stage.subtitle}
                 </div>
 
-                <p className="text-[11px] text-slate-400 font-mono-data leading-relaxed line-clamp-2 mb-3">
+                <p className="text-[11px] text-slate-400 font-mono-data leading-relaxed line-clamp-2 mb-2 sm:mb-3">
                   {stage.briefing}
                 </p>
 
                 {/* Hazards Badges */}
-                <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mb-2.5 sm:mb-3">
                   {stage.hazardsEnabled ? (
                     stage.hazardTypes.map((hz) => (
                       <span
@@ -103,7 +111,7 @@ export const CampaignSelect: React.FC<CampaignSelectProps> = ({
               {isUnlocked ? (
                 <button
                   onClick={() => onSelectLevel(stage.level)}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-display font-bold text-xs tracking-wider uppercase transition-all shadow-md shadow-cyan-950 cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-display font-bold text-xs tracking-wider uppercase transition-all shadow-md shadow-cyan-950 active:scale-98 cursor-pointer"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" /> DEPLOY TO SECTOR
                 </button>
@@ -118,7 +126,7 @@ export const CampaignSelect: React.FC<CampaignSelectProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="w-full max-w-4xl text-center text-[11px] font-mono-data text-slate-400 z-10 mt-4">
+      <div className="w-full max-w-4xl text-center text-[10px] sm:text-[11px] font-mono-data text-slate-400 z-10 mt-3 sm:mt-4">
         CAMPAIGN PROGRESS IS SAVED AUTOMATICALLY IN LOCAL STORAGE
       </div>
     </div>
